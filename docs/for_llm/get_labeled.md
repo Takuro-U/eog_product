@@ -30,13 +30,22 @@ class LabeledDataCollector:
 
 `_generate_label_sequence()`で以下の処理を行う：
 
-1. 各ラベルの出現回数を均等に分配（`LABELED_DATA_COUNT // len(LABEL_LIST)`）
+1. 全状態数（`LABELED_DATA_COUNT`）を各ラベルに均等分配
 2. 余りは先頭のラベルから順に1回ずつ追加
-3. シャッフル
-4. 連続して同じラベルにならないよう調整
+3. 初期状態（`LABEL_LIST[0]`）を1つ除去（初期状態として別途使用されるため）
+4. シャッフル
+5. 初期状態との連続、およびシーケンス内の連続を回避
 
 例: `LABELED_DATA_COUNT=15`, `LABEL_LIST`が5要素の場合
-→ 各ラベルが3回ずつ登場
+→ 各ラベルが3回ずつ登場（初期状態の1回 + シーケンス内の2回）
+
+## 状態遷移の流れ
+
+1. 開始時: `current_label = LABEL_LIST[0]`（初期状態）
+2. `LABEL_INTERVAL_SEC`秒後: 1回目の遷移 → `label_sequence[0]`
+3. さらに`LABEL_INTERVAL_SEC`秒後: 2回目の遷移 → `label_sequence[1]`
+4. ...
+5. `LABELED_DATA_COUNT`番目の状態の`LABEL_INTERVAL_SEC`秒後: 終了
 
 ## データフロー
 

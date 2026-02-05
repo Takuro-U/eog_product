@@ -49,35 +49,50 @@ class LabeledDataCollector:
     def _generate_label_sequence(self) -> None:
         """
         均等に分布したラベルシーケンスを生成
-        LABELED_DATA_COUNT回の遷移で各ラベルが最大限均等に登場する
+        
+        初期状態（LABEL_LIST[0]）は別途設定されるため、
+        ここではLABELED_DATA_COUNT - 1回の遷移先を生成する。
+        全体としてLABELED_DATA_COUNT個のラベル状態が均等に登場する。
         """
         labels = config.LABEL_LIST
-        count = config.LABELED_DATA_COUNT
+        total_states = config.LABELED_DATA_COUNT  # 初期状態を含む総状態数
         
         # 各ラベルの出現回数を計算（均等に分配）
-        base_count = count // len(labels)
-        remainder = count % len(labels)
+        base_count = total_states // len(labels)
+        remainder = total_states % len(labels)
         
-        # シーケンスを構築
-        sequence = []
+        # 全状態のリストを構築
+        all_states = []
         for i, label in enumerate(labels):
             # 余りがある場合は先頭のラベルに1回ずつ追加
             times = base_count + (1 if i < remainder else 0)
-            sequence.extend([label] * times)
+            all_states.extend([label] * times)
         
-        # シャッフル（ただし連続して同じラベルにならないよう調整）
-        random.shuffle(sequence)
+        # 初期状態（LABEL_LIST[0]）を1つ除去（初期状態として使用されるため）
+        initial_label = config.LABEL_LIST[0]
+        if initial_label in all_states:
+            all_states.remove(initial_label)
         
-        # 連続を避けるための調整
-        for i in range(1, len(sequence)):
-            if sequence[i] == sequence[i - 1]:
+        # シャッフル
+        random.shuffle(all_states)
+        
+        # 初期状態との連続を避ける（シーケンスの先頭が初期状態と同じ場合）
+        if all_states and all_states[0] == initial_label:
+            for j in range(1, len(all_states)):
+                if all_states[j] != initial_label:
+                    all_states[0], all_states[j] = all_states[j], all_states[0]
+                    break
+        
+        # シーケンス内の連続を避けるための調整
+        for i in range(1, len(all_states)):
+            if all_states[i] == all_states[i - 1]:
                 # 後ろから異なるラベルを探して交換
-                for j in range(i + 1, len(sequence)):
-                    if sequence[j] != sequence[i]:
-                        sequence[i], sequence[j] = sequence[j], sequence[i]
+                for j in range(i + 1, len(all_states)):
+                    if all_states[j] != all_states[i]:
+                        all_states[i], all_states[j] = all_states[j], all_states[i]
                         break
         
-        self.label_sequence = sequence
+        self.label_sequence = all_states
     
     def _setup_ui(self) -> None:
         """UIのセットアップ"""
@@ -113,7 +128,10 @@ class LabeledDataCollector:
     
     def _get_info_text(self) -> str:
         """情報テキストを生成"""
-        return f"{self.current_label} | {self.transition_count + 1}/{config.LABELED_DATA_COUNT}"
+        # 現在の状態番号（1始まり）: 初期状態=1, 1回遷移後=2, ...
+        current_state = self.transition_count + 1
+        total_states = config.LABELED_DATA_COUNT
+        return f"{self.current_label} | {current_state}/{total_states}"
     
     def _update_ui(self) -> None:
         """UIを更新"""
@@ -144,15 +162,14 @@ class LabeledDataCollector:
         # データ収集
         self._collect_data()
         
-        self.transition_count += 1
-        
-        # 終了判定
-        if self.transition_count >= config.LABELED_DATA_COUNT:
+        # 終了判定（LABELED_DATA_COUNT回目の遷移タイミングで終了）
+        if self.transition_count >= len(self.label_sequence):
             self._finish()
             return
         
         # 次のラベルに遷移
         self.current_label = self.label_sequence[self.transition_count]
+        self.transition_count += 1
         self._update_ui()
         
         # 次の遷移をスケジュール
@@ -230,8 +247,8 @@ class LabeledDataCollector:
         
         self.running = True
         
-        # 初期ラベル設定
-        self.current_label = self.label_sequence[0] if self.label_sequence else config.LABEL_LIST[0]
+        # 初期ラベル設定（LABEL_LIST[0]で固定）
+        self.current_label = config.LABEL_LIST[0]
         self._update_ui()
         
         # データ収集ループ開始
