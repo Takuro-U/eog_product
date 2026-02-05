@@ -1,6 +1,6 @@
 # シリアル通信設定
-# PORT = "/dev/cu.usbmodem103"
-PORT = "/dev/cu.usbmodemF0F5BD5281842"
+PORT = "/dev/cu.usbmodem1103"
+# PORT = "/dev/cu.usbmodemF0F5BD5281842"
 BAUDRATE = 115200
 
 # ADC設定
