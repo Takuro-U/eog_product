@@ -1,30 +1,23 @@
 """
 EOG Product - メインエントリーポイント
 コマンドラインからキー入力を受け付け、対応する処理を実行する
+
+実行方法:
+    python main.py
 """
 
 
-def acquisition():
-    """データ取得処理"""
-    print("acquisition を実行します...")
-    # TODO: 実際の処理を実装
-    # from scripts.acquisition import main
-    # main()
-
-
-def tabulation():
-    """集計処理"""
-    print("tabulation を実行します...")
-    # TODO: 実際の処理を実装
-    # from scripts.tabulation import main
-    # main()
+def get_labeled():
+    """ラベル付きデータ取得"""
+    print("ラベル付きデータ取得を開始します...")
+    from scripts import get_labeled as gl
+    gl.run()
 
 
 def show_help():
     """ヘルプを表示"""
     print("\n=== 利用可能なコマンド ===")
-    print("  1 : データ取得 (acquisition)")
-    print("  2 : 集計処理 (tabulation)")
+    print("  l : ラベル付きデータ取得 (get_labeled)")
     print("  h : ヘルプを表示")
     print("  q : 終了")
     print("=" * 28)
@@ -32,8 +25,7 @@ def show_help():
 
 # キー入力と関数のマッピング
 KEY_ACTIONS = {
-    "1": acquisition,
-    "2": tabulation,
+    "l": get_labeled,
     "h": show_help,
 }
 
