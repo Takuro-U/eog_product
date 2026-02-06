@@ -6,11 +6,13 @@ TabPFN用の教師データCSVとメタデータを生成する。
 """
 
 import json
+import os
 from pathlib import Path
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -18,6 +20,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import config
 from scripts import feature_extractions as fe
 from scripts.feature_extractions import create_windows
+
+# .env ファイル読み込み
+load_dotenv()
 
 
 # ============================================================
@@ -197,11 +202,16 @@ def run() -> None:
     csv_path = save_dir / f"context_{timestamp}.csv"
     features_df.to_csv(csv_path, index=False)
     
-    # メタデータJSON
+    # メタデータJSON（パスはプロジェクトルート起点の相対パス）
+    project_root_str = os.getenv("PROJECT_ROOT")
+    if not project_root_str:
+        raise RuntimeError("環境変数 PROJECT_ROOT が設定されていません (.env ファイルを確認)")
+    
+    project_root = Path(project_root_str)
     metadata = {
-        "labeled_signal_path": str(dataset["csv_path"]),
+        "labeled_signal_path": str(dataset["csv_path"].relative_to(project_root)),
         "feature_pattern_path": str(
-            Path(__file__).parent / "feature_extractions" / "patterns" / f"{pattern}.py"
+            (Path("scripts") / "feature_extractions" / "patterns" / f"{pattern}.py")
         ),
         "window_sec": config.WINDOW_SEC,
     }
