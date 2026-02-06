@@ -9,6 +9,7 @@ from tkinter import font as tkfont
 import random
 import time
 import csv
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -188,24 +189,34 @@ class LabeledDataCollector:
             self.root.after(100, self._data_collection_loop)
     
     def _save_csv(self) -> str:
-        """CSVファイルを保存"""
-        # 保存先ディレクトリ
-        save_dir = Path(__file__).parent.parent / "data" / "labeled"
+        """CSVファイルとメタデータを保存"""
+        # タイムスタンプ
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # 保存先ディレクトリ（日時名のサブディレクトリを挟む）
+        save_dir = Path(__file__).parent.parent / "data" / "labeled" / timestamp
         save_dir.mkdir(parents=True, exist_ok=True)
         
-        # ファイル名（タイムスタンプ）
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filepath = save_dir / f"labeled_{timestamp}.csv"
+        # CSVファイルパス
+        csv_filepath = save_dir / f"labeled_{timestamp}.csv"
         
         # CSV書き込み
         if self.collected_data:
             fieldnames = ["t_us", "ch1", "ch2", "ch3", "ch4", "pc_time", "label"]
-            with open(filepath, "w", newline="") as f:
+            with open(csv_filepath, "w", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(self.collected_data)
         
-        return str(filepath)
+        # メタデータ保存
+        metadata = {
+            "sampling_rate_hz": config.SAMPLING_RATE_HZ,
+        }
+        metadata_filepath = save_dir / f"metadata_{timestamp}.json"
+        with open(metadata_filepath, "w") as f:
+            json.dump(metadata, f, indent=2)
+        
+        return str(csv_filepath)
     
     def _finish(self) -> None:
         """処理を終了"""
@@ -236,7 +247,7 @@ class LabeledDataCollector:
         acquisition.start(
             port=config.PORT,
             baudrate=config.BAUDRATE,
-            adc_resolution=config.ADC_RESOLUTION
+            # adc_resolution=config.ADC_RESOLUTION
         )
         
         # キューをクリア

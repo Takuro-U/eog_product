@@ -1,11 +1,12 @@
 # シリアル通信設定
-PORT = "/dev/cu.usbmodem1103"
-# PORT = "/dev/cu.usbmodemF0F5BD5281842"
+# PORT = "/dev/cu.usbmodem1103"
+PORT = "/dev/cu.usbmodemF0F5BD5281842"
 BAUDRATE = 115200
 
-# ADC設定
-SAMPLING_RATE_HZ = 250
-ADC_RESOLUTION = 12  # ビット数
+# 以下はCSV出力時の設定
+# CSV固有の値はメタデータ用jsonを参照
+SAMPLING_RATE_HZ = 250 # **測定時の** サンプリングレート
+WINDOW_SEC = 125 # **教師データ生成時の** ウィンドウサイズ(秒)
 
 # ラベル付きデータ取得設定
 LABEL_INTERVAL_SEC = 2
