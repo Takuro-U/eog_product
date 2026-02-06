@@ -11,10 +11,10 @@ WINDOW_SEC = 0.1 # **教師データ生成時の** ウィンドウサイズ(秒)
 # ラベル付きデータ取得設定
 LABEL_INTERVAL_SEC = 2
 LABELED_DATA_COUNT = 15 # LABEL_LISTの倍数推奨
-LABEL_LIST = [ #ラベル名は可変だが，インデックスと方向の対応関係は固定
-    "center", # 中央
-    "left",   # 左    
-    "right",  # 右
-    "up",     # 上
-    "down",   # 下
+LABEL_LIST = [ # 基本的に固定 ラベル付きデータを取得する際コメントアウトで除外可能
+    "center",
+    "left",
+    "right",
+    "up",
+    "down",
 ]
