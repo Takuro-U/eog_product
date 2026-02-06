@@ -14,6 +14,13 @@ def get_labeled():
     gl.run()
 
 
+def get_input():
+    """入力データ取得"""
+    print("入力データ取得を開始します...")
+    from scripts import get_input as gi
+    gi.run()
+
+
 def generate_context():
     """教師データ生成"""
     print("教師データ生成を開始します...")
@@ -25,6 +32,7 @@ def show_help():
     """ヘルプを表示"""
     print("\n=== 利用可能なコマンド ===")
     print("  l : ラベル付きデータ取得 (get_labeled)")
+    print("  i : 入力データ取得 (get_input)")
     print("  c : 教師データ生成 (generate_context)")
     print("  h : ヘルプを表示")
     print("  q : 終了")
@@ -34,6 +42,7 @@ def show_help():
 # キー入力と関数のマッピング
 KEY_ACTIONS = {
     "l": get_labeled,
+    "i": get_input,
     "c": generate_context,
     "h": show_help,
 }

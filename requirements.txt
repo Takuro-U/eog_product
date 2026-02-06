@@ -3,3 +3,4 @@ numpy>=1.24
 pandas>=2.0
 scipy>=1.11
 python-dotenv>=1.0
+pynput>=1.7
