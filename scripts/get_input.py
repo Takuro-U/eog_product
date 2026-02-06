@@ -31,6 +31,9 @@ class InputDataCollector:
         
         # 現在押下中のキー
         self.pressed_keys: set = set()
+        
+        # キーボードリスナー
+        self.listener: Optional[keyboard.Listener] = None
     
     def _on_key_press(self, key) -> None:
         """キー押下時の処理"""
@@ -161,6 +164,10 @@ class InputDataCollector:
         print("\n\n終了処理を開始します...")
         self.running = False
         
+        # キーボードリスナーを停止
+        if self.listener:
+            self.listener.stop()
+        
         # 信号取得を停止
         acquisition.stop()
         
@@ -197,11 +204,12 @@ class InputDataCollector:
         collection_thread.start()
         
         # キーボードリスナーを開始
-        with keyboard.Listener(
+        self.listener = keyboard.Listener(
             on_press=self._on_key_press,
             on_release=self._on_key_release
-        ) as listener:
-            listener.join()
+        )
+        self.listener.start()
+        self.listener.join()
         
         # 終了後、データ収集スレッドの終了を待つ
         collection_thread.join(timeout=1.0)
