@@ -24,7 +24,7 @@ import numpy as np
 from scipy import signal
 import pandas as pd
 
-from . import (
+from .. import (
     BaseRealtimeExtractor,
     create_windows,
     determine_label,

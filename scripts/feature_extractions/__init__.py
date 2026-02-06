@@ -8,7 +8,9 @@
     scripts/feature_extractions/
     ├── __init__.py          # 共通ユーティリティ + ディスパッチャー
     ├── _template.py         # 新規作成用テンプレート
-    └── eog_29dim.py         # パターン例: 29次元特徴量
+    └── patterns/            # 個別パターン格納ディレクトリ
+        ├── __init__.py
+        └── eog_29dim.py     # パターン例: 29次元特徴量
 
 使用例（パターン名を引数で指定）:
     from scripts import feature_extractions as fe
@@ -288,7 +290,7 @@ def _get_pattern_module(pattern: str) -> "ModuleType":
         ValueError: パターンが見つからない場合
     """
     try:
-        return import_module(f".{pattern}", package=__name__)
+        return import_module(f".patterns.{pattern}", package=__name__)
     except ImportError as e:
         available = list_patterns()
         raise ValueError(
@@ -303,12 +305,12 @@ def list_patterns() -> list[str]:
     Returns:
         パターン名のリスト
     """
-    patterns_dir = Path(__file__).parent
+    patterns_dir = Path(__file__).parent / "patterns"
     patterns = []
     
     for path in patterns_dir.glob("*.py"):
         name = path.stem
-        # __init__.py, _template.py, _で始まるファイルは除外
+        # __init__.py, _で始まるファイルは除外
         if not name.startswith("_"):
             patterns.append(name)
     

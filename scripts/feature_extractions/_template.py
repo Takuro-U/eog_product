@@ -1,21 +1,27 @@
 """
 特徴量抽出テンプレート
 
-新しい特徴量抽出パターンを作成する際は、このファイルをコピーして
-以下を実装する:
+新しい特徴量抽出パターンを作成する際は、このファイルを
+patterns/ ディレクトリにコピーして以下を実装する:
     1. FEATURE_COLUMNS: 出力する特徴量カラム名のリスト
     2. _compute_features(): 特徴量計算ロジック
 
+作成手順:
+    cp scripts/feature_extractions/_template.py scripts/feature_extractions/patterns/your_pattern.py
+    # your_pattern.py を編集
+
 使用例:
-    # バッチ処理（CSV → 特徴量DataFrame）
-    from scripts.feature_extractions import your_extractor
-    features_df = your_extractor.batch_extract_from_csv(
+    from scripts import feature_extractions as fe
+    
+    # バッチ処理
+    features_df = fe.batch_extract_from_csv(
         "data/labeled/labeled_xxx.csv",
+        pattern="your_pattern",
         window_size=125
     )
     
     # リアルタイム処理
-    extractor = your_extractor.RealtimeExtractor(window_size=125)
+    extractor = fe.create_realtime_extractor(pattern="your_pattern", window_size=125)
     for sample in stream:
         features = extractor.push(sample)
         if features is not None:
@@ -28,7 +34,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from . import (
+from .. import (
     BaseRealtimeExtractor,
     create_windows,
     determine_label,
