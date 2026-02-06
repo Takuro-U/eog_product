@@ -130,7 +130,7 @@ def run() -> None:
     dataset = _prompt_selection(
         datasets,
         "=== ラベル付き信号を選択 ===",
-        lambda d: f"{d['name']}  (sampling_rate: {d['metadata']['sampling_rate_hz']} Hz)",
+        lambda d: f"{d['metadata'].get('display_name', d['name'])}  (sampling_rate: {d['metadata']['sampling_rate_hz']} Hz)",
     )
     
     # ----------------------------------------------------------
@@ -209,6 +209,7 @@ def run() -> None:
     
     project_root = Path(project_root_str)
     metadata = {
+        "display_name": timestamp,  # 初期値はタイムスタンプ（親ディレクトリ名）
         "labeled_signal_path": str(dataset["csv_path"].relative_to(project_root)),
         "feature_pattern_path": str(
             (Path("scripts") / "feature_extractions" / "patterns" / f"{pattern}.py")

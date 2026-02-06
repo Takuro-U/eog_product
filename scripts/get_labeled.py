@@ -210,6 +210,7 @@ class LabeledDataCollector:
         
         # メタデータ保存
         metadata = {
+            "display_name": timestamp,  # 初期値は親ディレクトリ名と同じ
             "sampling_rate_hz": config.SAMPLING_RATE_HZ,
         }
         metadata_filepath = save_dir / f"metadata_{timestamp}.json"
