@@ -6,7 +6,7 @@ BAUDRATE = 115200
 # 以下はCSV出力時の設定
 # CSV固有の値はメタデータ用jsonを参照
 SAMPLING_RATE_HZ = 250 # **測定時の** サンプリングレート
-WINDOW_SEC = 125 # **教師データ生成時の** ウィンドウサイズ(秒)
+WINDOW_SEC = 0.5 # **教師データ生成時の** ウィンドウサイズ(秒)
 
 # ラベル付きデータ取得設定
 LABEL_INTERVAL_SEC = 2
