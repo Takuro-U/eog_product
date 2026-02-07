@@ -41,7 +41,6 @@ class AdcSample(NamedTuple):
     ch2: int        # チャンネル2の値
     ch3: int        # チャンネル3の値
     ch4: int        # チャンネル4の値
-    pc_time: float  # PC側の受信時刻 (time.time())
 
 
 # ============================================================
@@ -87,9 +86,8 @@ def _parse_line(raw_line: bytes) -> Optional[AdcSample]:
         ch2 = int(parts[2])
         ch3 = int(parts[3])
         ch4 = int(parts[4])
-        pc_time = time.time()
         
-        return AdcSample(t_us=t_us, ch1=ch1, ch2=ch2, ch3=ch3, ch4=ch4, pc_time=pc_time)
+        return AdcSample(t_us=t_us, ch1=ch1, ch2=ch2, ch3=ch3, ch4=ch4)
     
     except (ValueError, UnicodeDecodeError):
         return None

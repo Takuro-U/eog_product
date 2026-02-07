@@ -151,7 +151,6 @@ class LabeledDataCollector:
                 "ch2": sample.ch2,
                 "ch3": sample.ch3,
                 "ch4": sample.ch4,
-                "pc_time": sample.pc_time,
                 "label": self.current_label
             })
     
@@ -202,7 +201,7 @@ class LabeledDataCollector:
         
         # CSV書き込み
         if self.collected_data:
-            fieldnames = ["t_us", "ch1", "ch2", "ch3", "ch4", "pc_time", "label"]
+            fieldnames = ["t_us", "ch1", "ch2", "ch3", "ch4", "label"]
             with open(csv_filepath, "w", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
