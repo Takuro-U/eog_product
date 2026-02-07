@@ -28,12 +28,20 @@ def generate_context():
     gc.run()
 
 
+def tabular_classify():
+    """TabPFN分類"""
+    print("TabPFN分類を開始します...")
+    from scripts.tabpfn import tabular
+    tabular.run()
+
+
 def show_help():
     """ヘルプを表示"""
     print("\n=== 利用可能なコマンド ===")
     print("  l : ラベル付きデータ取得 (get_labeled)")
     print("  i : 入力データ取得 (get_input)")
     print("  c : 教師データ生成 (generate_context)")
+    print("  t : TabPFN分類 (tabular)")
     print("  h : ヘルプを表示")
     print("  q : 終了")
     print("=" * 28)
@@ -44,6 +52,7 @@ KEY_ACTIONS = {
     "l": get_labeled,
     "i": get_input,
     "c": generate_context,
+    "t": tabular_classify,
     "h": show_help,
 }
 
