@@ -42,18 +42,19 @@ LABEL_POSITION = {
 
 class LabeledDataCollector:
     """ラベル付きデータ収集クラス"""
-    
+
     def __init__(self):
         self.current_label: str = config.LABEL_LIST[0]
         self.transition_count: int = 0
         self.label_sequence: list[str] = []
         self.collected_data: list[dict] = []
-        
+
         self.root: Optional[tk.Tk] = None
         self.label_widget: Optional[tk.Label] = None
         self.info_widget: Optional[tk.Label] = None
+        self.standby_widget: Optional[tk.Label] = None
         self.running: bool = False
-        
+
         self._generate_label_sequence()
     
     def _generate_label_sequence(self) -> None:
@@ -108,14 +109,14 @@ class LabeledDataCollector:
         """UIのセットアップ"""
         self.root = tk.Tk()
         self.root.title("ラベル付きデータ取得")
-        self.root.geometry("400x300")
+        self.root.geometry("600x500")
         self.root.configure(bg="black")
-        
+
         # 閉じるボタンで停止
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
-        
-        # 矢印表示用ラベル
-        arrow_font = tkfont.Font(family="Helvetica", size=120)
+
+        # 矢印表示用ラベル（初期は非表示）
+        arrow_font = tkfont.Font(family="Helvetica", size=200, weight="bold")
         self.label_widget = tk.Label(
             self.root,
             text=LABEL_DISPLAY.get(self.current_label, "?"),
@@ -125,8 +126,9 @@ class LabeledDataCollector:
         )
         pos = LABEL_POSITION.get(self.current_label, (0.5, 0.45))
         self.label_widget.place(relx=pos[0], rely=pos[1], anchor="center")
-        
-        # 情報表示
+        self.label_widget.place_forget()
+
+        # 情報表示（初期は非表示）
         info_font = tkfont.Font(family="Helvetica", size=14)
         self.info_widget = tk.Label(
             self.root,
@@ -135,7 +137,20 @@ class LabeledDataCollector:
             fg="gray",
             bg="black"
         )
-        self.info_widget.pack(side=tk.BOTTOM, pady=10)
+
+        # 待機中メッセージ
+        standby_font = tkfont.Font(family="Helvetica", size=20)
+        self.standby_widget = tk.Label(
+            self.root,
+            text="Enter キーを押すと測定を開始します",
+            font=standby_font,
+            fg="white",
+            bg="black"
+        )
+        self.standby_widget.place(relx=0.5, rely=0.5, anchor="center")
+
+        # Enter キーで測定開始
+        self.root.bind("<Return>", lambda event: self._start_measurement())
     
     def _get_info_text(self) -> str:
         """情報テキストを生成"""
@@ -153,6 +168,39 @@ class LabeledDataCollector:
         if self.info_widget:
             self.info_widget.config(text=self._get_info_text())
     
+    def _start_measurement(self) -> None:
+        """Enter押下で測定を開始"""
+        if self.running:
+            return
+
+        # 待機メッセージを非表示
+        if self.standby_widget:
+            self.standby_widget.place_forget()
+
+        # 矢印・情報ウィジェットを表示
+        pos = LABEL_POSITION.get(self.current_label, (0.5, 0.45))
+        if self.label_widget:
+            self.label_widget.place(relx=pos[0], rely=pos[1], anchor="center")
+        if self.info_widget:
+            self.info_widget.pack(side=tk.BOTTOM, pady=10)
+
+        # シリアル通信開始・キュークリア
+        acquisition.start(
+            port=config.PORT,
+            baudrate=config.BAUDRATE,
+        )
+        acquisition.clear_queue()
+
+        self.running = True
+
+        # データ収集ループ開始
+        if self.root:
+            self.root.after(100, self._data_collection_loop)
+
+        # 最初の遷移をスケジュール
+        if self.root:
+            self.root.after(int(config.LABEL_INTERVAL_SEC * 1000), self._transition)
+
     def _collect_data(self) -> None:
         """現在キューにあるデータを収集"""
         samples = acquisition.get_data_batch()
@@ -265,34 +313,13 @@ class LabeledDataCollector:
     
     def run(self) -> None:
         """メイン処理を実行"""
-        # 信号取得を開始
-        acquisition.start(
-            port=config.PORT,
-            baudrate=config.BAUDRATE,
-            # adc_resolution=config.ADC_RESOLUTION
-        )
-        
-        # キューをクリア
-        acquisition.clear_queue()
-        
-        # UIセットアップ
-        self._setup_ui()
-        
-        self.running = True
-        
         # 初期ラベル設定（LABEL_LIST[0]で固定）
         self.current_label = config.LABEL_LIST[0]
-        self._update_ui()
-        
-        # データ収集ループ開始
-        if self.root:
-            self.root.after(100, self._data_collection_loop)
-        
-        # 最初の遷移をスケジュール
-        if self.root:
-            self.root.after(int(config.LABEL_INTERVAL_SEC * 1000), self._transition)
-        
-        # UIメインループ
+
+        # UIセットアップ（待機状態で表示）
+        self._setup_ui()
+
+        # UIメインループ（Enter押下まで待機）
         if self.root:
             self.root.mainloop()
 
