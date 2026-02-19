@@ -248,11 +248,16 @@ def run() -> None:
         label_column=None,  # labelは参照しない
     )
     
-    # 各窓の中間時間 t_us を計算
+    # 各窓の中間時間 t_us と正解ラベルを計算
     t_us_list = []
+    true_labels = []
+    has_true_label = "label" in input_df.columns
     for start, window_df in create_windows(input_df, window_size, stride):
         mid_idx = start + window_size // 2
         t_us_list.append(int(input_df.iloc[mid_idx]["t_us"]))
+        if has_true_label:
+            unique = window_df["label"].unique()
+            true_labels.append(str(unique[0]) if len(unique) == 1 else "transition")
     
     print(f"  抽出されたサンプル数: {len(input_features_df)}")
     
@@ -279,11 +284,14 @@ def run() -> None:
     save_dir = Path(__file__).parent.parent.parent / "data" / "output" / timestamp
     save_dir.mkdir(parents=True, exist_ok=True)
     
-    # 分類結果CSV（t_us + label）
-    result_df = pd.DataFrame({
+    # 分類結果CSV（t_us + predicted_label [+ true_label]）
+    result_data: dict = {
         "t_us": t_us_list,
-        "label": predictions,
-    })
+        "predicted_label": predictions,
+    }
+    if has_true_label:
+        result_data["true_label"] = true_labels
+    result_df = pd.DataFrame(result_data)
     
     csv_path = save_dir / f"output_{timestamp}.csv"
     result_df.to_csv(csv_path, index=False)
