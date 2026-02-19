@@ -136,13 +136,23 @@ class InputDataCollector:
         # CSVファイルパス
         csv_filepath = save_dir / f"input_{timestamp}.csv"
         
-        # CSV書き込み
+        # CSV書き込み（t_usを取得開始からの経過時間に変換）
         if self.collected_data:
+            # 最初のサンプルのt_usを基準とする
+            t_us_offset = self.collected_data[0]["t_us"]
+            
+            # 経過時間に変換したデータを作成
+            converted_data = []
+            for row in self.collected_data:
+                converted_row = row.copy()
+                converted_row["t_us"] = row["t_us"] - t_us_offset
+                converted_data.append(converted_row)
+            
             fieldnames = ["t_us", "ch1", "ch2", "ch3", "ch4", "label"]
             with open(csv_filepath, "w", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writeheader()
-                writer.writerows(self.collected_data)
+                writer.writerows(converted_data)
         
         # メタデータ保存
         metadata = {
