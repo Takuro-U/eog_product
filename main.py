@@ -35,6 +35,13 @@ def tabular_classify():
     tabular.run()
 
 
+def oscilloscope():
+    """オシロスコープ"""
+    print("オシロスコープを起動します...")
+    from scripts import oscilloscope as osc
+    osc.run()
+
+
 def show_help():
     """ヘルプを表示"""
     print("\n=== 利用可能なコマンド ===")
@@ -42,6 +49,7 @@ def show_help():
     print("  i : 入力データ取得 (get_input)")
     print("  c : 教師データ生成 (generate_context)")
     print("  t : TabPFN分類 (tabular)")
+    print("  o : オシロスコープ (oscilloscope)")
     print("  h : ヘルプを表示")
     print("  q : 終了")
     print("=" * 28)
@@ -53,6 +61,7 @@ KEY_ACTIONS = {
     "i": get_input,
     "c": generate_context,
     "t": tabular_classify,
+    "o": oscilloscope,
     "h": show_help,
 }
 

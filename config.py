@@ -1,5 +1,6 @@
 # シリアル通信設定
-PORT = "/dev/cu.usbmodem1103"
+# PORT = "/dev/cu.usbmodem1103"
+PORT = "/dev/cu.usbmodem1203"
 # PORT = "/dev/cu.usbmodemF0F5BD5281842"
 BAUDRATE = 115200
 
