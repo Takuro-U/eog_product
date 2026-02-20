@@ -184,12 +184,13 @@ class LabeledDataCollector:
         if self.info_widget:
             self.info_widget.pack(side=tk.BOTTOM, pady=10)
 
-        # シリアル通信開始・キュークリア
+        # シリアル通信開始
         acquisition.start(
             port=config.PORT,
             baudrate=config.BAUDRATE,
         )
-        acquisition.clear_queue()
+        # キュークリアは行わない（他のプロセスのデータを消さないため）
+        # 代わりに、この時点から新たに到着するデータのみを収集
 
         self.running = True
 

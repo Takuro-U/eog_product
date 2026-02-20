@@ -124,12 +124,12 @@ class InputDataCollector:
         print("\n測定中")
         print("スペースキーで終了")
 
-        # シリアル通信開始・キュークリア
+        # シリアル通信開始
         acquisition.start(
             port=config.PORT,
             baudrate=config.BAUDRATE,
         )
-        acquisition.clear_queue()
+        # キュークリアは行わない（他のプロセスのデータを消さないため）
 
         self.running = True
         self.measuring = True

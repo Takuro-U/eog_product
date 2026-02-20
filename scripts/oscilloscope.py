@@ -224,8 +224,8 @@ class Oscilloscope:
             baudrate=config.BAUDRATE,
         )
 
-        # キューをクリア
-        acquisition.clear_queue()
+        # キュークリアは行わない（他のプロセスのデータを消さないため）
+        # オシロスコープは表示用途なので、現時点以降のデータのみ使用
 
         # UIセットアップ
         self._setup_ui()

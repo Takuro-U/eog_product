@@ -59,6 +59,9 @@ _data_queue: queue.Queue = queue.Queue(maxsize=1000)
 _adc_resolution: int = 12
 _adc_max_value: int = 4095
 
+# 参照カウント（複数プロセスからの利用に対応）
+_reference_count: int = 0
+
 
 # ============================================================
 # 内部関数
@@ -140,46 +143,75 @@ def start(
     port: str,
     baudrate: int,
     adc_resolution: int = 12,
-    timeout: float = 0.1
+    timeout: float = 0.1,
+    shared: bool = True
 ) -> None:
     """
     データ取得を開始
-    
+
     Args:
         port: シリアルポート
         baudrate: ボーレート
         adc_resolution: ADC解像度（ビット数、デフォルト12）
         timeout: シリアル読み取りのタイムアウト（秒）
+        shared: 既に起動中の場合は共有する（デフォルト: True）
     """
-    global _serial, _thread, _adc_resolution, _adc_max_value
-    
-    if _running.is_set():
-        return
-    
-    _adc_resolution = adc_resolution
-    _adc_max_value = (1 << adc_resolution) - 1
-    
-    _serial = serial.Serial(
-        port=port,
-        baudrate=baudrate,
-        timeout=timeout
-    )
-    
-    _running.set()
-    _thread = threading.Thread(target=_read_loop, daemon=True)
-    _thread.start()
+    global _serial, _thread, _adc_resolution, _adc_max_value, _reference_count
+
+    with _lock:
+        if _running.is_set():
+            if shared:
+                # 既に起動中なので、既存の接続を共有
+                _reference_count += 1
+                return
+            else:
+                raise RuntimeError("acquisition は既に起動中です")
+
+        _adc_resolution = adc_resolution
+        _adc_max_value = (1 << adc_resolution) - 1
+
+        try:
+            _serial = serial.Serial(
+                port=port,
+                baudrate=baudrate,
+                timeout=timeout,
+                exclusive=False  # 複数プロセスからのアクセスを許可
+            )
+        except (serial.SerialException, OSError) as e:
+            raise RuntimeError(f"シリアルポート '{port}' を開けません: {e}") from e
+
+        _running.set()
+        _reference_count = 1
+        _thread = threading.Thread(target=_read_loop, daemon=True)
+        _thread.start()
 
 
 def stop() -> None:
-    """データ取得を停止"""
-    global _serial, _thread
-    
-    _running.clear()
-    
+    """
+    データ取得を停止（参照カウント方式）
+
+    複数のプロセスが共有している場合、全ての参照が解放されるまで
+    実際の停止処理は行われません。
+    """
+    global _serial, _thread, _reference_count
+
+    with _lock:
+        if not _running.is_set():
+            return
+
+        _reference_count -= 1
+
+        # まだ他のプロセスが使用中の場合は停止しない
+        if _reference_count > 0:
+            return
+
+        # 全ての参照が解放されたので、実際に停止
+        _running.clear()
+
     if _thread is not None:
         _thread.join(timeout=2.0)
         _thread = None
-    
+
     if _serial is not None:
         _serial.close()
         _serial = None
