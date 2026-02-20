@@ -22,22 +22,37 @@ import config
 
 class InputDataCollector:
     """入力データ収集クラス"""
-    
+
     def __init__(self):
         self.collected_data: list[dict] = []
         self.current_label: str = config.LABEL_LIST[0]  # デフォルトは"center"
         self.running: bool = False
+        self.measuring: bool = False  # 測定中フラグ（待機中=False, 測定中=True）
         self.lock = threading.Lock()
-        
+
         # 現在押下中のキー
         self.pressed_keys: set = set()
-        
+
         # キーボードリスナー
         self.listener: Optional[keyboard.Listener] = None
+        # データ収集スレッド
+        self.collection_thread: Optional[threading.Thread] = None
     
     def _on_key_press(self, key) -> None:
         """キー押下時の処理"""
         try:
+            # スペースキーの判定（測定開始/終了）
+            if key == keyboard.Key.space:
+                if not self.measuring:
+                    self._start_measurement()
+                else:
+                    self._finish()
+                return
+
+            # 測定中のみ十字キー入力を受け付ける
+            if not self.measuring:
+                return
+
             # 十字キーの判定
             if key == keyboard.Key.left:
                 with self.lock:
@@ -55,16 +70,16 @@ class InputDataCollector:
                 with self.lock:
                     self.pressed_keys.add('down')
                     self._update_label()
-            
-            # xキーで終了
-            if hasattr(key, 'char') and key.char == 'x':
-                self._finish()
         except AttributeError:
             pass
     
     def _on_key_release(self, key) -> None:
         """キー解放時の処理"""
         try:
+            # 測定中のみ十字キー解放を受け付ける
+            if not self.measuring:
+                return
+
             # 十字キーの判定
             if key == keyboard.Key.left:
                 with self.lock:
@@ -100,6 +115,28 @@ class InputDataCollector:
             self.current_label = config.LABEL_LIST[4]  # down
         else:
             self.current_label = config.LABEL_LIST[0]  # center
+
+    def _start_measurement(self) -> None:
+        """スペースキー押下で測定を開始"""
+        if self.measuring:
+            return
+
+        print("\n測定中")
+        print("スペースキーで終了")
+
+        # シリアル通信開始・キュークリア
+        acquisition.start(
+            port=config.PORT,
+            baudrate=config.BAUDRATE,
+        )
+        acquisition.clear_queue()
+
+        self.running = True
+        self.measuring = True
+
+        # データ収集スレッドを開始
+        self.collection_thread = threading.Thread(target=self._collect_data_loop, daemon=True)
+        self.collection_thread.start()
     
     def _collect_data_loop(self) -> None:
         """データ収集ループ"""
@@ -169,59 +206,49 @@ class InputDataCollector:
         """処理を終了"""
         if not self.running:
             return
-        
+
         print("\n\n終了処理を開始します...")
         self.running = False
-        
+        self.measuring = False
+
         # キーボードリスナーを停止
         if self.listener:
             self.listener.stop()
-        
-        # 信号取得を停止
-        acquisition.stop()
-        
-        # CSV保存
-        filepath = self._save_csv()
-        print(f"データを保存しました: {filepath}")
-        print(f"総サンプル数: {len(self.collected_data)}")
+
+        # 信号取得が開始済みの場合のみ停止・保存
+        if acquisition.is_running():
+            acquisition.stop()
+
+            filepath = self._save_csv()
+            print(f"データを保存しました: {filepath}")
+            print(f"総サンプル数: {len(self.collected_data)}")
     
     def run(self) -> None:
         """メイン処理を実行"""
         print("\n=== 入力データ取得 ===")
-        print("十字キーを押下して入力をラベル付けしてください")
+        print("スペースキーを押すと測定を開始します")
+        print("【操作方法】")
         print("  左キー → left")
         print("  右キー → right")
         print("  上キー → up")
         print("  下キー → down")
         print("  未押下 → center")
-        print("\nxキーを押すと終了します")
+        print("スペースキーを押すと測定を終了します")
         print("=" * 40)
-        
-        # 信号取得を開始
-        acquisition.start(
-            port=config.PORT,
-            baudrate=config.BAUDRATE,
-        )
-        
-        # キューをクリア
-        acquisition.clear_queue()
-        
+
         self.running = True
-        
-        # データ収集スレッドを開始
-        collection_thread = threading.Thread(target=self._collect_data_loop, daemon=True)
-        collection_thread.start()
-        
-        # キーボードリスナーを開始
+
+        # キーボードリスナーを開始（待機状態）
         self.listener = keyboard.Listener(
             on_press=self._on_key_press,
             on_release=self._on_key_release
         )
         self.listener.start()
         self.listener.join()
-        
+
         # 終了後、データ収集スレッドの終了を待つ
-        collection_thread.join(timeout=1.0)
+        if self.collection_thread:
+            self.collection_thread.join(timeout=1.0)
 
 
 def run() -> None:
