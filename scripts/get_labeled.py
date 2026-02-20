@@ -295,13 +295,13 @@ class LabeledDataCollector:
         # 最後のデータを収集
         self._collect_data()
         
-        # 信号取得を停止
-        acquisition.stop()
-        
-        # CSV保存
-        filepath = self._save_csv()
-        print(f"データを保存しました: {filepath}")
-        print(f"総サンプル数: {len(self.collected_data)}")
+        # 信号取得が開始済みの場合のみ停止・保存
+        if acquisition.is_running():
+            acquisition.stop()
+
+            filepath = self._save_csv()
+            print(f"データを保存しました: {filepath}")
+            print(f"総サンプル数: {len(self.collected_data)}")
         
         # UIを閉じる
         if self.root:
