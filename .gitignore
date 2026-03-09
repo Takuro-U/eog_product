@@ -19,7 +19,8 @@ env/
 .DS_Store
 
 # Data directory
-data/
+data/context/*
+data/output/*
 
 # Logs
 *.log
